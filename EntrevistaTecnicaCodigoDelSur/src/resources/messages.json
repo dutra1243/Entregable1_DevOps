@@ -1,0 +1,41 @@
+{
+  "errors": {
+    "auth": {
+      "allFieldsRequired": "All fields are required.",
+      "emailAlreadyInUse": "Email already in use.",
+      "emailPasswordRequired": "Email and password are required.",
+      "invalidCredentials": "Invalid email or password.",
+      "noTokenProvided": "No token provided.",
+      "tokenBlacklisted": "Token has been blacklisted.",
+      "invalidToken": "Invalid token",
+      "movieIdRequired": "movieId is required.",
+      "invalidMovieId": "movieId must be a number.",
+      "userNotFound": "User not found.",
+      "movieNotAvailable": "Movie not available.",
+      "movieAlreadyInFavorites": "Movie already in favorites.",
+      "invalidSearchQuery": "Search query must be a string.",
+      "invalidEmailFormat": "Invalid email format",
+      "firstNameRequired": "First name is required",
+      "lastNameRequired": "Last name is required",
+      "passwordMinLength": "Password must be at least 8 characters long",
+      "passwordLowercase": "Password must contain at least one lowercase letter",
+      "passwordUppercase": "Password must contain at least one uppercase letter",
+      "passwordNumber": "Password must contain at least one number",
+      "passwordSpecialChar": "Password must contain at least one special character",
+      "passwordRequired": "Password is required"
+    },
+    "generic": {
+      "internalServerError": "Internal server error"
+    }
+  },
+  "success": {
+    "auth": {
+      "userRegistered": "User registered successfully.",
+      "loginSuccessful": "Login successful",
+      "logoutSuccessful": "Logout successful."
+    },
+    "favorite": {
+      "movieAdded": "Movie added to favorites."
+    }
+  }
+}
