@@ -1,0 +1,34 @@
+[
+  {
+    "backdrop_path": "/w5IDXtifKntw0ajv2co7jFlTQDM.jpg",
+    "id": 62,
+    "title": "2001: A Space Odyssey",
+    "original_title": "2001: A Space Odyssey",
+    "overview": "Humanity finds a mysterious object buried beneath the lunar surface and sets off to find its origins with the help of HAL 9000, the world's most advanced super computer.",
+    "poster_path": "/ve72VxNqjGM69Uky4WTo2bK6rfq.jpg",
+    "media_type": "movie",
+    "adult": false,
+    "original_language": "en",
+    "popularity": 9.1043,
+    "release_date": "1968-04-02",
+    "video": false,
+    "vote_average": 8.1,
+    "vote_count": 11861
+  },
+  {
+    "backdrop_path": "/nAxGnGHOsfzufThz20zgmRwKur3.jpg",
+    "id": 1233413,
+    "title": "Sinners",
+    "original_title": "Sinners",
+    "overview": "Trying to leave their troubled lives behind, twin brothers return to their hometown to start again, only to discover that an even greater evil is waiting to welcome them back.",
+    "poster_path": "/jYfMTSiFFK7ffbY2lay4zyvTkEk.jpg",
+    "media_type": "movie",
+    "adult": false,
+    "original_language": "en",
+    "popularity": 553.0692,
+    "release_date": "2025-04-16",
+    "video": false,
+    "vote_average": 7.534,
+    "vote_count": 1293
+  }
+]

@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: movies-green
+  labels:
+    slot: green
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: movies
+      slot: green
+  template:
+    metadata:
+      labels:
+        app: movies
+        slot: green
+    spec:
+      volumes:
+      - name: movies-storage
+        hostPath:
+          path: /mnt/movies
+          type: DirectoryOrCreate
+      containers:
+      - name: movies
+        image: movies/app:green
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
+        env:
+        - name: SLOT
+          value: "green"
+        - name: PORT
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: PORT
+        - name: USERS_FILE
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: USERS_FILE
+        - name: BLACKLIST_FILE
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: BLACKLIST_FILE
+        - name: FAVORITES_FILE
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: FAVORITES_FILE
+        - name: MOVIES_FILE
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: MOVIES_FILE
+        ports:
+        - containerPort: 3000
+        volumeMounts:
+        - name: movies-storage
+          mountPath: /app/data
