@@ -25,4 +25,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: mauromachadoc/DevOpsEntregable1CICD.movies:${{ github.sha }}
+          tags: mauromachadoc/devopsentregable1cicd.movies:${{ github.sha }}
