@@ -48,3 +48,40 @@ Para hacer el túnel y acceder a la aplicación usamos:
 ```bash
 minikube service movies --url
 ```
+
+## Prometheus y Grafana
+
+La API expone metricas en `/metrics`. Para instalar Prometheus y Grafana en Minikube
+usamos el chart `kube-prometheus-stack` de Helm:
+
+```powershell
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+helm install monitoring prometheus-community/kube-prometheus-stack -n monitoring --create-namespace
+```
+
+Aplicamos el `ServiceMonitor` despues de crear el Service de la aplicacion:
+
+```powershell
+kubectl apply -f k8s/serviceMonitor.yaml
+kubectl get pods -n monitoring
+```
+
+En otra terminal, abrimos las interfaces:
+
+```powershell
+kubectl port-forward -n monitoring svc/monitoring-kube-prometheus-prometheus 9090:9090
+kubectl port-forward -n monitoring svc/monitoring-grafana 3001:80
+```
+
+Prometheus queda disponible en `http://localhost:9090` y Grafana en
+`http://localhost:3001`. El usuario de Grafana es `admin`; para obtener la
+contrasena en PowerShell:
+
+```powershell
+$encoded = kubectl get secret -n monitoring monitoring-grafana -o jsonpath="{.data.admin-password}"
+[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($encoded))
+```
+
+En Prometheus, revisamos `Status > Targets` y confirmamos que `movies` este
+en estado `UP`. Grafana ya incluye Prometheus como fuente de datos.
