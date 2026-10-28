@@ -1,13 +1,15 @@
-FROM node:20-slim
+FROM node:24-bookworm-slim
 
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci --omit=dev
 
 COPY src/ ./src/
-COPY data/ ./data/
+COPY --chown=node:node data/ ./data/
+
+USER node
 
 EXPOSE 3000
 
-CMD ["npm", "start"]
+CMD ["node", "src/server.js"]

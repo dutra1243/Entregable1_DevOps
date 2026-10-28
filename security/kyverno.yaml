@@ -1,0 +1,93 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: prohibit-latest
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: prohibit-latest
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      validate:
+        message: "Las imagenes deben usar una etiqueta explicita distinta de latest."
+        foreach:
+          - list: "request.object.spec.[containers, initContainers, ephemeralContainers][]"
+            deny:
+              conditions:
+                any:
+                  - key: "{{ regex_match('(^|/)[^/:@]+:[^/:@]+(@.*)?$', element.image) }}"
+                    operator: Equals
+                    value: false
+                  - key: "{{ regex_match('(^|/)[^/:@]+:latest(@.*)?$', element.image) }}"
+                    operator: Equals
+                    value: true
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-resources
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: require-resources
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      validate:
+        message: "Todos los contenedores deben definir requests y limits de CPU y memoria."
+        pattern:
+          spec:
+            containers:
+              - resources:
+                  requests:
+                    cpu: "?*"
+                    memory: "?*"
+                  limits:
+                    cpu: "?*"
+                    memory: "?*"
+            =(initContainers):
+              - resources:
+                  requests:
+                    cpu: "?*"
+                    memory: "?*"
+                  limits:
+                    cpu: "?*"
+                    memory: "?*"
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-non-root
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: require-non-root
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      validate:
+        message: "Los pods deben ejecutarse como usuarios no root."
+        pattern:
+          spec:
+            securityContext:
+              runAsNonRoot: true
+              =(runAsUser): ">0"
+            containers:
+              - =(securityContext):
+                  =(runAsNonRoot): true
+                  =(runAsUser): ">0"
+            =(initContainers):
+              - =(securityContext):
+                  =(runAsNonRoot): true
+                  =(runAsUser): ">0"
+            =(ephemeralContainers):
+              - =(securityContext):
+                  =(runAsNonRoot): true
+                  =(runAsUser): ">0"
