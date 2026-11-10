@@ -8,6 +8,8 @@ RUN npm ci --omit=dev
 COPY src/ ./src/
 COPY --chown=node:node data/ ./data/
 
+COPY --chown=node:node data/ ./seed-data/
+
 USER node
 
 EXPOSE 3000

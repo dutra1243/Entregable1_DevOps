@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  PORT: "3000"
+  USERS_FILE: "data/users.txt"
+  BLACKLIST_FILE: "data/blacklist.txt"
+  FAVORITES_FILE: "data/favorites.txt"
+  MOVIES_FILE: "data/movies.txt"
