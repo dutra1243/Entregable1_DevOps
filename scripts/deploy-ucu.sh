@@ -87,7 +87,11 @@ fi
 k apply --dry-run=server -f "$tmp/deploy.yaml"
 k apply -f "$tmp/deploy.yaml"
 k wait --for=jsonpath='{.status.phase}'=Bound pvc/movies-data --timeout=120s
-for d in movies-blue movies-green prometheus grafana; do
+for component in prometheus grafana; do
+ k rollout restart deployment/"$component"
+ k rollout status deployment/"$component" --timeout=600s
+done
+for d in movies-blue movies-green pod-metrics prometheus grafana; do
  k rollout status deployment/"$d" --timeout=600s
 done
 k port-forward service/movies 13000:3000 > "$tmp/forward.log" 2>&1 &

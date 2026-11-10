@@ -70,6 +70,10 @@ spec:
           httpGet: {path: /, port: 3000}
           initialDelaySeconds: 20
         env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
         - name: TMDB_API_KEY
           valueFrom:
             secretKeyRef: {name: movies-secrets, key: TMDB_API_KEY}

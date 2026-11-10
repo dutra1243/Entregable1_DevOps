@@ -8,3 +8,10 @@ resources:
   - greenDeployments.yaml
   - storage.yaml
   - monitoring.yaml
+
+configMapGenerator:
+  - name: grafana-dashboard
+    files:
+      - movies.json=dashboard.json
+generatorOptions:
+  disableNameSuffixHash: true

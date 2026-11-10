@@ -8,7 +8,24 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const SLOT = process.env.SLOT || "unknown";
 
+client.register.setDefaultLabels({pod: process.env.POD_NAME || 'local', slot: SLOT});
 client.collectDefaultMetrics();
+
+// Persistent business metric: both slots read the same users file.
+const fs = require('fs');
+new client.Gauge({
+    name: 'movies_registered_users',
+    help: 'Number of registered accounts in the shared application data store',
+    collect() {
+        try {
+            const users = JSON.parse(fs.readFileSync(process.env.USERS_FILE || 'data/users.txt', 'utf8') || '[]');
+            this.set(users.length);
+        } catch (error) {
+            // A read failure must not be reported as zero users.
+            this.set(NaN);
+        }
+    },
+});
 
 const httpDuration = new client.Histogram({
     name: 'http_request_duration_seconds',
@@ -25,6 +42,7 @@ app.get('/metrics', async (req, res) => {
 });
 
 app.use((req, res, next) => {
+    if ((req.get('user-agent') || '').startsWith('kube-probe/')) return next();
     const end = httpDuration.startTimer();
 
     res.on('finish', () => {
