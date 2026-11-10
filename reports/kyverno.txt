@@ -1,0 +1,10 @@
+Error from server: error when creating "security/non-compliant.yaml": admission webhook "validate.kyverno.svc-fail" denied the request: 
+
+resource Pod/default/non-compliant was blocked due to the following policies 
+
+prohibit-latest:
+  prohibit-latest: 'validation failure: Las imagenes deben usar una etiqueta explicita distinta de latest.'
+require-non-root:
+  require-non-root: 'validation error: Los pods deben ejecutarse como usuarios no root. rule require-non-root failed at path /spec/securityContext/runAsUser/'
+require-resources:
+  require-resources: 'validation error: Todos los contenedores deben definir requests y limits de CPU y memoria. rule require-resources failed at path /spec/containers/0/resources/limits/'

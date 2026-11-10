@@ -5,3 +5,13 @@ npm-debug.log
 README.md
 Dockerfile
 .dockerignore
+grupolegionarios.yaml
+.env
+.env.local
+kubeconfig-ucu
+.rendered/
+*.example
+
+__pycache__/
+
+security-results/

@@ -1,0 +1,114 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: movies-blue
+  labels:
+    slot: blue
+spec:
+  strategy:
+    type: Recreate
+  replicas: 1
+  selector:
+    matchLabels:
+      app: movies
+      slot: blue
+  template:
+    metadata:
+      labels:
+        app: movies
+        slot: blue
+    spec:
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app: movies
+            topologyKey: kubernetes.io/hostname
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      volumes:
+      - name: movies-storage
+        persistentVolumeClaim:
+          claimName: movies-data
+      initContainers:
+      - name: seed
+        image: movies/app:blue
+        command: [node, -e, "const fs=require('fs'); for(const f of fs.readdirSync('/app/seed-data')) {if(!fs.existsSync('/data/'+f)) fs.copyFileSync('/app/seed-data/'+f,'/data/'+f);}"]
+        resources:
+          requests: {cpu: 10m, memory: 32Mi}
+          limits: {cpu: 100m, memory: 64Mi}
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities: {drop: [ALL]}
+        volumeMounts:
+        - {name: movies-storage, mountPath: /data}
+      containers:
+      - name: movies
+        image: movies/app:blue
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
+        readinessProbe:
+          httpGet: {path: /, port: 3000}
+          initialDelaySeconds: 5
+        livenessProbe:
+          httpGet: {path: /, port: 3000}
+          initialDelaySeconds: 20
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: TMDB_API_KEY
+          valueFrom:
+            secretKeyRef: {name: movies-secrets, key: TMDB_API_KEY}
+        - name: JWT_SECRET_KEY
+          valueFrom:
+            secretKeyRef: {name: movies-secrets, key: JWT_SECRET_KEY}
+        - name: SLOT
+          value: "blue"
+        - name: PORT
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: PORT
+        - name: USERS_FILE
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: USERS_FILE
+        - name: BLACKLIST_FILE
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: BLACKLIST_FILE
+        - name: FAVORITES_FILE
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: FAVORITES_FILE
+        - name: MOVIES_FILE
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: MOVIES_FILE
+        ports:
+        - containerPort: 3000
+        volumeMounts:
+        - name: movies-storage
+          mountPath: /app/data

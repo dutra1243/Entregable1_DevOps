@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: movies
+  labels:
+    app: movies
+spec:
+  type: ClusterIP
+  selector:
+    app: movies
+    slot: blue
+  ports:
+  - name: http
+    port: 3000
+    targetPort: 3000
