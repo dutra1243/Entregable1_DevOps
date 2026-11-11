@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: obligatorio-grupolegionarios
+resources:
+  - configMap.yaml
+  - service.yaml
+  - blueDeployments.yaml
+  - greenDeployments.yaml
+  - storage.yaml
+  - monitoring.yaml
+
+configMapGenerator:
+  - name: grafana-dashboard
+    files:
+      - movies.json=dashboard.json
+generatorOptions:
+  disableNameSuffixHash: true

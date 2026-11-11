@@ -1,0 +1,416 @@
+{
+  "apiVersion": "apps/v1",
+  "kind": "Deployment",
+  "metadata": {
+    "name": "prometheus"
+  },
+  "spec": {
+    "replicas": 1,
+    "selector": {
+      "matchLabels": {
+        "app": "prometheus"
+      }
+    },
+    "template": {
+      "metadata": {
+        "labels": {
+          "app": "prometheus"
+        }
+      },
+      "spec": {
+        "securityContext": {
+          "runAsNonRoot": true,
+          "runAsUser": 65534,
+          "fsGroup": 65534
+        },
+        "containers": [
+          {
+            "name": "prometheus",
+            "image": "prom/prometheus:v3.2.1",
+            "ports": [
+              {
+                "containerPort": 9090
+              }
+            ],
+            "resources": {
+              "requests": {
+                "cpu": "25m",
+                "memory": "256Mi"
+              },
+              "limits": {
+                "cpu": "500m",
+                "memory": "512Mi"
+              }
+            },
+            "volumeMounts": [
+              {
+                "name": "config",
+                "mountPath": "/etc/prometheus"
+              },
+              {
+                "name": "data",
+                "mountPath": "/prometheus"
+              }
+            ],
+            "readinessProbe": {
+              "httpGet": {
+                "path": "/-/ready",
+                "port": 9090
+              }
+            }
+          }
+        ],
+        "volumes": [
+          {
+            "name": "config",
+            "configMap": {
+              "name": "prometheus-config"
+            }
+          },
+          {
+            "name": "data",
+            "emptyDir": {}
+          }
+        ]
+      }
+    }
+  }
+}
+---
+{
+  "apiVersion": "v1",
+  "kind": "Service",
+  "metadata": {
+    "name": "prometheus"
+  },
+  "spec": {
+    "selector": {
+      "app": "prometheus"
+    },
+    "ports": [
+      {
+        "port": 9090,
+        "targetPort": 9090
+      }
+    ]
+  }
+}
+---
+{
+  "apiVersion": "apps/v1",
+  "kind": "Deployment",
+  "metadata": {
+    "name": "grafana"
+  },
+  "spec": {
+    "replicas": 1,
+    "selector": {
+      "matchLabels": {
+        "app": "grafana"
+      }
+    },
+    "template": {
+      "metadata": {
+        "labels": {
+          "app": "grafana"
+        }
+      },
+      "spec": {
+        "securityContext": {
+          "runAsNonRoot": true,
+          "runAsUser": 472,
+          "fsGroup": 472
+        },
+        "containers": [
+          {
+            "name": "grafana",
+            "image": "grafana/grafana:11.6.0",
+            "ports": [
+              {
+                "containerPort": 3000
+              }
+            ],
+            "resources": {
+              "requests": {
+                "cpu": "25m",
+                "memory": "128Mi"
+              },
+              "limits": {
+                "cpu": "500m",
+                "memory": "512Mi"
+              }
+            },
+            "volumeMounts": [
+              {
+                "name": "config",
+                "mountPath": "/etc/grafana/provisioning/datasources"
+              },
+              {
+                "name": "data",
+                "mountPath": "/var/lib/grafana"
+              },
+              {
+                "name": "dashboards",
+                "mountPath": "/var/lib/grafana/dashboards"
+              },
+              {
+                "name": "providers",
+                "mountPath": "/etc/grafana/provisioning/dashboards"
+              }
+            ],
+            "readinessProbe": {
+              "httpGet": {
+                "path": "/api/health",
+                "port": 3000
+              }
+            },
+            "env": [
+              {
+                "name": "GF_SECURITY_ADMIN_PASSWORD",
+                "valueFrom": {
+                  "secretKeyRef": {
+                    "name": "grafana-secrets",
+                    "key": "password"
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "volumes": [
+          {
+            "name": "config",
+            "configMap": {
+              "name": "grafana-config"
+            }
+          },
+          {
+            "name": "data",
+            "emptyDir": {}
+          },
+          {
+            "name": "dashboards",
+            "configMap": {
+              "name": "grafana-dashboard"
+            }
+          },
+          {
+            "name": "providers",
+            "configMap": {
+              "name": "grafana-providers"
+            }
+          }
+        ]
+      }
+    }
+  }
+}
+---
+{
+  "apiVersion": "v1",
+  "kind": "Service",
+  "metadata": {
+    "name": "grafana"
+  },
+  "spec": {
+    "selector": {
+      "app": "grafana"
+    },
+    "ports": [
+      {
+        "port": 3000,
+        "targetPort": 3000
+      }
+    ]
+  }
+}
+---
+{
+  "apiVersion": "v1",
+  "kind": "ConfigMap",
+  "metadata": {
+    "name": "prometheus-config"
+  },
+  "data": {
+    "prometheus.yml": "global:\n  scrape_interval: 15s\nscrape_configs:\n- job_name: movies\n  static_configs:\n  - targets: [movies-blue-metrics:3000, movies-green-metrics:3000]\n- job_name: pod-resources\n  static_configs:\n  - targets: [pod-metrics:9101]\n"
+  }
+}
+---
+{
+  "apiVersion": "v1",
+  "kind": "ConfigMap",
+  "metadata": {
+    "name": "grafana-config"
+  },
+  "data": {
+    "datasource.yaml": "apiVersion: 1\ndatasources:\n- name: Prometheus\n  uid: prometheus\n  type: prometheus\n  access: proxy\n  url: http://prometheus:9090\n  isDefault: true\n"
+  }
+}
+---
+{
+  "apiVersion": "v1",
+  "kind": "ConfigMap",
+  "metadata": {
+    "name": "grafana-providers"
+  },
+  "data": {
+    "provider.yaml": "apiVersion: 1\nproviders:\n- name: movies\n  type: file\n  options:\n    path: /var/lib/grafana/dashboards\n"
+  }
+}
+---
+{
+  "apiVersion": "v1",
+  "kind": "Service",
+  "metadata": {
+    "name": "movies-blue-metrics"
+  },
+  "spec": {
+    "selector": {
+      "app": "movies",
+      "slot": "blue"
+    },
+    "ports": [
+      {
+        "name": "http",
+        "port": 3000,
+        "targetPort": 3000
+      }
+    ]
+  }
+}
+---
+{
+  "apiVersion": "v1",
+  "kind": "Service",
+  "metadata": {
+    "name": "movies-green-metrics"
+  },
+  "spec": {
+    "selector": {
+      "app": "movies",
+      "slot": "green"
+    },
+    "ports": [
+      {
+        "name": "http",
+        "port": 3000,
+        "targetPort": 3000
+      }
+    ]
+  }
+}
+---
+{
+  "apiVersion": "v1",
+  "kind": "ConfigMap",
+  "metadata": {
+    "name": "pod-metrics-code"
+  },
+  "data": {
+    "exporter.cjs": "const https = require('node:https');\nconst http = require('node:http');\nconst fs = require('node:fs');\nconst tokenFile='/var/run/secrets/kubernetes.io/serviceaccount/token';\nconst ca=fs.readFileSync('/var/run/secrets/kubernetes.io/serviceaccount/ca.crt');\nconst namespace=fs.readFileSync('/var/run/secrets/kubernetes.io/serviceaccount/namespace','utf8').trim();\nfunction quantity(value) {\n const m=/^([0-9.]+)([a-zA-Z]*)$/.exec(value);\n if(!m) throw Error('Unsupported metric quantity');\n const factors={'':1,n:1e-9,u:1e-6,m:1e-3,k:1e3,K:1e3,M:1e6,G:1e9,T:1e12,Ki:1024,Mi:1024**2,Gi:1024**3,Ti:1024**4};\n if(!(m[2] in factors)) throw Error('Unsupported unit');\n return Number(m[1])*factors[m[2]];\n}\nhttp.createServer((req,res)=>{\n if(req.url==='/healthz') {res.end('ok');return;}\n if(req.url!=='/metrics') {res.writeHead(404);res.end();return;}\n const request=https.get({hostname:process.env.KUBERNETES_SERVICE_HOST,port:process.env.KUBERNETES_SERVICE_PORT_HTTPS||443,path:'/apis/metrics.k8s.io/v1beta1/namespaces/'+namespace+'/pods',ca,headers:{Authorization:'Bearer '+fs.readFileSync(tokenFile,'utf8').trim()},timeout:10000}, upstream=>{\n  let body='';upstream.on('data',c=>body+=c);\n  upstream.on('end',()=>{\n   try {\n    if(upstream.statusCode!==200) throw Error('Metrics API unavailable');\n    const data=JSON.parse(body);\n    const lines=['# HELP ucu_pod_cpu_cores Pod CPU usage reported by metrics-server in cores','# TYPE ucu_pod_cpu_cores gauge','# HELP ucu_pod_memory_bytes Pod memory working set reported by metrics-server','# TYPE ucu_pod_memory_bytes gauge'];\n    for(const pod of data.items) {\n     const labels='namespace='+JSON.stringify(namespace)+',pod='+JSON.stringify(pod.metadata.name);\n     lines.push('ucu_pod_cpu_cores{'+labels+'} '+pod.containers.reduce((n,c)=>n+quantity(c.usage.cpu),0));\n     lines.push('ucu_pod_memory_bytes{'+labels+'} '+pod.containers.reduce((n,c)=>n+quantity(c.usage.memory),0));\n    }\n    res.setHeader('Content-Type','text/plain; version=0.0.4');res.end(lines.join('\\n')+'\\n');\n   } catch(e) {res.writeHead(503);res.end('Metrics collection failed');}\n  });\n });\n request.on('timeout',()=>request.destroy());request.on('error',()=>{if(!res.writableEnded){res.writeHead(503);res.end('Metrics API unavailable');}});\n}).listen(9101,'0.0.0.0');\n"
+  }
+}
+---
+{
+  "apiVersion": "apps/v1",
+  "kind": "Deployment",
+  "metadata": {
+    "name": "pod-metrics"
+  },
+  "spec": {
+    "replicas": 1,
+    "selector": {
+      "matchLabels": {
+        "app": "pod-metrics"
+      }
+    },
+    "template": {
+      "metadata": {
+        "labels": {
+          "app": "pod-metrics"
+        }
+      },
+      "spec": {
+        "serviceAccountName": "grupolegionarios",
+        "securityContext": {
+          "runAsNonRoot": true,
+          "runAsUser": 1000
+        },
+        "containers": [
+          {
+            "name": "exporter",
+            "image": "node:24-bookworm-slim",
+            "command": [
+              "node",
+              "/code/exporter.cjs"
+            ],
+            "ports": [
+              {
+                "containerPort": 9101
+              }
+            ],
+            "resources": {
+              "requests": {
+                "cpu": "10m",
+                "memory": "32Mi"
+              },
+              "limits": {
+                "cpu": "100m",
+                "memory": "64Mi"
+              }
+            },
+            "securityContext": {
+              "readOnlyRootFilesystem": true,
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              }
+            },
+            "readinessProbe": {
+              "httpGet": {
+                "path": "/healthz",
+                "port": 9101
+              }
+            },
+            "volumeMounts": [
+              {
+                "name": "code",
+                "mountPath": "/code",
+                "readOnly": true
+              }
+            ]
+          }
+        ],
+        "volumes": [
+          {
+            "name": "code",
+            "configMap": {
+              "name": "pod-metrics-code"
+            }
+          }
+        ]
+      }
+    }
+  }
+}
+---
+{
+  "apiVersion": "v1",
+  "kind": "Service",
+  "metadata": {
+    "name": "pod-metrics"
+  },
+  "spec": {
+    "selector": {
+      "app": "pod-metrics"
+    },
+    "ports": [
+      {
+        "port": 9101,
+        "targetPort": 9101
+      }
+    ]
+  }
+}
