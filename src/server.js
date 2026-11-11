@@ -16,7 +16,7 @@ app.use((req, res, next) => {
 
 
 app.get('/', (req, res) => {
-    res.send(`Hello, World! (${SLOT})`);
+    res.send(`Hello, Workjnadknfljnld! (${SLOT})`);
 });
 
 const authRoutes = require('./routes/auth');
